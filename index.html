@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>二维码生成器</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+    }
+    body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .main {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-half {
+      flex: 0 1 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      padding: 0 16px;
+      box-sizing: border-box;
+      border-bottom: 1.5px solid #ececec;
+    }
+    .input-area {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+    .input-area label {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 4px;
+      text-align: left;
+      width: 100%;
+    }
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      max-height: 220px;
+      resize: vertical;
+      font-size: 1.1rem;
+      padding: 16px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #bfc7d1;
+      box-sizing: border-box;
+      background: #f9f9f9;
+      transition: border 0.2s;
+      outline: none;
+      font-family: inherit;
+    }
+    textarea:focus {
+      border: 1.5px solid #0078ff;
+      background: #f4faff;
+    }
+    .input-btn-row {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+    button {
+      padding: 12px 32px;
+      font-size: 1.1rem;
+      background: linear-gradient(90deg, #0078ff 60%, #00c6fb 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,120,255,0.08);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    button:disabled {
+      background: #b3d1ff;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .tip {
+      color: #e74c3c;
+      font-size: 1rem;
+      min-height: 20px;
+      text-align: center;
+      margin-top: 2px;
+    }
+    .bottom-half {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      background: #fafbfc;
+      position: relative;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0;
+    }
+    .qr-list {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      height: 100%;
+      width: max-content;
+      padding: 24px 0 24px 0;
+      gap: 0;
+    }
+    .qr-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100vw;
+      min-width: 100vw;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 0 8vw 0 8vw;
+      position: relative;
+    }
+    .qr-item canvas {
+      width: 84vw !important;
+      height: 84vw !important;
+      max-width: 420px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      margin-bottom: 18px;
+      margin-top: 0;
+      display: block;
+    }
+    .qr-label {
+      font-size: 1.08rem;
+      color: #222;
+      word-break: break-all;
+      text-align: center;
+      max-width: 90vw;
+      line-height: 1.5;
+      background: rgba(255,255,255,0.85);
+      border-radius: 8px;
+      padding: 8px 4px 6px 4px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      overflow-wrap: break-word;
+      white-space: pre-line;
+    }
+    @media (min-width: 600px) {
+      .main {
+        max-width: 520px;
+        margin: 0 auto;
+        height: 90vh;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      }
+      .qr-item {
+        width: 520px;
+        min-width: 520px;
+        padding: 0 40px 0 40px;
+      }
+      .qr-item canvas {
+        width: 360px !important;
+        height: 360px !important;
+        max-width: 420px;
+        max-height: 420px;
+      }
+      .qr-label {
+        max-width: 420px;
+        font-size: 1.1rem;
+      }
+      .input-area {
+        max-width: 520px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="top-half">
+      <form class="input-area" id="qrForm" autocomplete="off" onsubmit="return false;">
+        <textarea id="inputArea" placeholder="每行输入一条内容，例如：\nhttps://baidu.com\nHello World"></textarea>
+        <div class="input-btn-row">
+          <button id="generateBtn" type="submit">生成二维码</button>
+        </div>
+        <div class="tip" id="tip"></div>
+      </form>
+    </div>
+    <div class="bottom-half">
+      <div class="qr-list" id="qrList"></div>
+    </div>
+  </div>
+  <script>
+    const inputArea = document.getElementById('inputArea');
+    const generateBtn = document.getElementById('generateBtn');
+    const tip = document.getElementById('tip');
+    const qrList = document.getElementById('qrList');
+    const qrForm = document.getElementById('qrForm');
+
+    function clearQRCodes() {
+      qrList.innerHTML = '';
+    }
+
+    function showTip(msg) {
+      tip.textContent = msg;
+    }
+
+    function hideTip() {
+      tip.textContent = '';
+    }
+
+    function createQRCode(text) {
+      const qr = qrcode(0, 'L');
+      qr.addData(text);
+      qr.make();
+      // 计算二维码尺寸
+      let size = Math.min(window.innerWidth, 520) * 0.84;
+      if (window.innerWidth > 600) size = 360;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const cellSize = size / qr.getModuleCount();
+      for (let row = 0; row < qr.getModuleCount(); row++) {
+        for (let col = 0; col < qr.getModuleCount(); col++) {
+          ctx.fillStyle = qr.isDark(row, col) ? '#000' : '#fff';
+          ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+      return canvas;
+    }
+
+    function renderQRCodes() {
+      clearQRCodes();
+      hideTip();
+      let value = inputArea.value.trim();
+      if (!value) {
+        showTip('请输入内容');
+        return;
+      }
+      let lines = value.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+      if (lines.length === 0) {
+        showTip('请输入内容');
+        return;
+      }
+      lines.forEach(line => {
+        const qrItem = document.createElement('div');
+        qrItem.className = 'qr-item';
+        const canvas = createQRCode(line);
+        const label = document.createElement('div');
+        label.className = 'qr-label';
+        label.textContent = line;
+        qrItem.appendChild(canvas);
+        qrItem.appendChild(label);
+        qrList.appendChild(qrItem);
+      });
+    }
+
+    qrForm.addEventListener('submit', renderQRCodes);
+    generateBtn.addEventListener('click', renderQRCodes);
+    inputArea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        renderQRCodes();
+      }
+    });
+  </script>
+</body>
+</html>
